@@ -1,0 +1,8 @@
+- Draw wrap around
+- Out of bounds handling
+- Toggle speed/pausing
+- Proper Sound
+- Quirk flags
+- More error handling (rom arg, invalid opcodes, sdl not initing right)
+- Superchip8/xochip support
+- Toggle speed/pausing

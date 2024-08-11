@@ -182,8 +182,8 @@ void randAndNnn(){
 // DXYN, draw a sprite stored in memory based on our instruction nibbles
 void draw(){
     // Store the x and y coords via our registers and make a placeholder pixel
-    uint16_t x = v[X];
-    uint16_t y = v[Y];
+    uint16_t x = v[X] % 64;
+    uint16_t y = v[Y] % 32;
     uint8_t curPixel;
     
     // Flag for checking if a pixel is drawn overed/xor'd, set to 0 to start out with 
@@ -195,12 +195,14 @@ void draw(){
         curPixel = memory[I + i];
         for (int j = 0; j < 8; j++){
             // Check if we are drawing over an existing pixel and set the flag accordingly
-            if (((curPixel & (0x80 >> j)) != 0) && (display[x + j + ((y + i) * 64)] == 1)){
-                v[0xF] = 1;
+            if ((curPixel & (0x80 >> j)) != 0){
+                if (display[x + j + ((y + i) * 64)] == 1){
+                    v[0xF] = 1;
+                }
+                /* Get our current display pixel and xor it by the pixel in memory, 
+                properly drawing a new pixel or drawing over an old one */
+                display[x + j + ((y + i) * 64)] ^= ((curPixel >> (7 - j)) & 1);
             }
-            /* Get our current display pixel and xor it by the pixel in memory, 
-            properly drawing a new pixel or drawing over an old one */
-            display[x + j + ((y + i) * 64)] ^= ((curPixel >> (7 - j)) & 1);
         }
     }
 
@@ -210,12 +212,12 @@ void draw(){
 
 // EX9E 
 void skipVxEqKeyboard(){
-    if (keyboard[v[X]] == 0) PC += 2;
+    if (keyboard[v[X]] != 0) PC += 2;
 }
 
 // EXA1
 void skipVxNeqKeyboard(){
-    if (keyboard[v[X]] != 0) PC += 2;
+    if (keyboard[v[X]] == 0) PC += 2;
 }
 
 // FX07
@@ -244,6 +246,7 @@ void stopExecuteTillInput(){
     for (int i = 0; i < 16; i++){
         if (keyboard[i]){
             //SDL_Delay(2000);
+            printf("%c", keyboard[i]);
             v[X] = i;
             PC += 2;
             return;
@@ -279,7 +282,7 @@ void loadRegs(){
 }
 
 void executeOp(){
-    //printf(" %X \n", opcode);
+    printf(" %X \n", opcode);
     /* Simple switch statement based on the first num of our instruction, 
     break down the instruction further based on further nibbles */
     switch(opcode & 0xF000){
@@ -475,8 +478,8 @@ int main(int argc, char ** argv){
     while (true){
         // Handle keyboard input
         if (SDL_PollEvent(&event)){
-            printf("%c",  event.key.keysym.sym);
-            if (event.type == SDL_Quit){
+            //printf("%c",  event.key.keysym.sym);
+            if (event.type == SDL_QUIT){
                 SDL_DestroyWindow(window);
                 SDL_Quit();
 	            return 0;
@@ -523,4 +526,3 @@ int main(int argc, char ** argv){
 
 }
 
-// -lmingw32 -lSDL2main -lSDL2
